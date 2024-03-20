@@ -12,6 +12,13 @@ pub mod solana_dex {
         msg!("Created Token Swap State Account---");
         Ok(())
     }
+
+    pub fn initialize_mint_accounts(ctx: Context<InitializeMintAccounts>) -> Result<()> {
+        msg!("Created Token X Mint Account---");
+        msg!("Created Token Y Mint Account---");
+        Ok(())
+    }
+
 }
 
 #[derive(Accounts)]
@@ -35,7 +42,7 @@ pub struct InitializeTokenSwapAccount<'info> {
 pub struct InitializeMintAccounts<'info> {
     #[account(mut)]
     signer: Signer<'info>, 
-    /// CHECK: This is not dangerous because we don't read or write from this account
+    /// CHECK: This is safe since we don't read or write from this account
     mint_authority: AccountInfo<'info>, 
     #[account(
         init, 
