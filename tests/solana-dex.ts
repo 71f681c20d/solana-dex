@@ -21,6 +21,11 @@ describe("solana-dex", () => {
 
     let x_mint;
     let y_mint;
+    let token_x_account;
+    let token_y_account;
+
+    let swapAuthority;
+    let bump;
 
 
   it("Initialize token swap account", async () => {
@@ -66,6 +71,36 @@ describe("solana-dex", () => {
         systemProgram: anchor.web3.SystemProgram.programId,
       })
       .signers([x_mint, y_mint])
+      .rpc();
+  });
+
+  it("Initialize swap pool Authority (PDA), and Token Accounts", async () => {
+    [swapAuthority, bump] = await anchor.web3.PublicKey.findProgramAddress(
+      [tokenSwapStateAccount.publicKey.toBuffer()],
+      TOKEN_SWAP_PROGRAM_ID
+    );
+    console.log("Swap Pool Authority :: " + swapAuthority.toString());
+
+    token_x_account = anchor.web3.Keypair.generate();
+    console.log(`token_x_account :: `, token_x_account.publicKey.toString());
+
+    token_y_account = anchor.web3.Keypair.generate();
+    console.log(`token_y_account :: `, token_y_account.publicKey.toString());
+
+    const tx = await program.methods
+      .initializeTokenAccounts()
+      .accounts({
+        signer: owner,
+        tokenAuthority: swapAuthority,
+        xMint: x_mint.publicKey,
+        yMint: y_mint.publicKey,
+        tokenXAccount: token_x_account.publicKey,
+        tokenYAccount: token_y_account.publicKey,
+        tokenProgram: splToken.TOKEN_PROGRAM_ID,
+        rent: SYSVAR_RENT_PUBKEY,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .signers([token_x_account, token_y_account])
       .rpc();
   });
 
