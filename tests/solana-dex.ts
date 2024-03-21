@@ -27,6 +27,10 @@ describe("solana-dex", () => {
     let swapAuthority;
     let bump;
 
+    let pool_token_mint;
+    let pool_token_fee;
+    let pool_token_account;
+
 
   it("Initialize token swap account", async () => {
     const tx = await program.methods
@@ -104,4 +108,42 @@ describe("solana-dex", () => {
       .rpc();
   });
 
+  it("Mint Tokens to Token Accounts", async () => {
+    const tx = await program.methods
+      .mintTokens(new anchor.BN(100))
+      .accounts({
+        mintAuthority: mintAuthority.publicKey,
+        mintAccount: x_mint.publicKey,
+        tokenAccount: token_x_account.publicKey,
+        tokenProgram: splToken.TOKEN_PROGRAM_ID,
+      })
+      .signers([mintAuthority])
+      .rpc();
+    const token_x_account_info = await splToken.getAccount(
+      provider.connection,
+      token_x_account.publicKey
+    );
+    console.log(
+      "token_x_account balance :: " + token_x_account_info.amount.toString()
+    );
+
+    const txn = await program.methods
+      .mintTokens(new anchor.BN(200))
+      .accounts({
+        mintAuthority: mintAuthority.publicKey,
+        mintAccount: y_mint.publicKey,
+        tokenAccount: token_y_account.publicKey,
+        tokenProgram: splToken.TOKEN_PROGRAM_ID,
+      })
+      .signers([mintAuthority])
+      .rpc();
+    const token_y_account_info = await splToken.getAccount(
+      provider.connection,
+      token_y_account.publicKey
+    );
+    console.log(
+      "token_y_account balance :: " + token_y_account_info.amount.toString()
+    );
+  });
+  
 });

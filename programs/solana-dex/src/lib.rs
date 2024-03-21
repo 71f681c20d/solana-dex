@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use spl_token_swap::state::SwapVersion;
-use anchor_spl::token::{ Mint, Token, TokenAccount };
+use anchor_spl::token::{ Mint, Token, TokenAccount, mint_to };
 
 declare_id!("GBgHzis7UarrQYHo9viMjhzVEAcVvo7KLPbyShwdWA2M");
 
@@ -25,6 +25,27 @@ pub mod solana_dex {
         Ok(())
     }
 
+    pub fn mint_tokens(ctx: Context<MintTokens>, amount: u64) -> Result<()> {
+
+        // Account required for the CPI
+        let cpi_accounts = anchor_spl::token::MintTo {
+            mint: ctx.accounts.mint_account.to_account_info(), 
+            to: ctx.accounts.token_account.to_account_info(), 
+            authority: ctx.accounts.mint_authority.to_account_info(), 
+        };
+
+        // Program in which CPI will be invoked
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+
+        // Create the CpiContext (All non-argument inputs)
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+
+        // Call anchor's helper function, passing in the CPI context and amount(input arguement)
+        mint_to(cpi_ctx, amount)?;
+        
+        msg!("Minted {} tokens to ATA---", amount);
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -94,5 +115,16 @@ pub struct InitializeTokenAccounts<'info> {
     token_program: Program<'info, Token>, // Token Program
     rent: Sysvar<'info, Rent>,     // Rent
     system_program: Program<'info, System>, // System Program
+}
+
+#[derive(Accounts)]
+pub struct MintTokens<'info> {
+    #[account(mut)]
+    mint_authority: Signer<'info>, 
+    #[account(mut)]
+    mint_account: Account<'info, Mint>,
+    #[account(mut)]
+    token_account: Account<'info, TokenAccount>,
+    token_program: Program<'info, Token>
 }
 
